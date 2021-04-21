@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+    <head>
+        <title>IRAC - Practica 3 - Grupo1</title>
+        <style>
+            video {
+                width: 640px;
+                height: 360px;
+            }
+        </style>
+    </head>
+    <body>
+        
+        <div>
+            <video id="videoPlayer" class="dashjs-player" autoplay controls preload="auto"></video>
+        </div>
+        <script src="dash.all.min.js"></script>
+        <script>
+            (function(){
+                var url = "https://dash.akamaized.net/envivio/EnvivioDash3/manifest.mpd";
+                var player = dashjs.MediaPlayer().create();
+                player.initialize(document.querySelector(".dashjs-player"), url, true);
+            })();
+        </script>
+    </body>
+</html>
