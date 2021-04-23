@@ -9,11 +9,19 @@
             init();
         });
         function init(){
+	    const protData = {
+	     "org.w3.clearkey": {
+	     "clearkeys": {
+	     "cW5AK5BW43HzbTSKpiu3SQ": "hyN9IKGfWKdAwFaE5pm0qg"
+	    }
+	    }
+	    };
             var video,
             player,
-            mpd_url = "./output/stream.mpd";
+            mpd_url = "./output_encrypted/stream.mpd";
             video = document.querySelector("video");
             player = dashjs.MediaPlayer().create();
+	    player.setProtectionData(protData);
             player.initialize(video, mpd_url, true);
             player.on(dashjs.MediaPlayer.events["PLAYBACK_ENDED"], function() {
             clearInterval(eventPoller);
