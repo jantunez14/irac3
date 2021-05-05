@@ -3,63 +3,183 @@
 <head>
     <meta charset="utf-8"/>
     <title>Auto-player</title>
+
+
+
     <script src="http://cdn.dashjs.org/latest/dash.all.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             init();
         });
+        var bitrate_double;
+        var buffer_double;
         function init(){
-	    const protData = {
-	     "org.w3.clearkey": {
-	     "clearkeys": {
-	     "cW5AK5BW43HzbTSKpiu3SQ": "hyN9IKGfWKdAwFaE5pm0qg"
-	    }
-	    }
-	    };
-            var video,
-            player,
-            mpd_url = "./output_encrypted/stream.mpd";
-            video = document.querySelector("video");
-            player = dashjs.MediaPlayer().create();
-	    player.setProtectionData(protData);
-            player.initialize(video, mpd_url, true);
-            player.on(dashjs.MediaPlayer.events["PLAYBACK_ENDED"], function() {
+            const protData = {
+               "org.w3.clearkey": {
+                   "clearkeys": {
+                       "oW5AK5BW43HzbTSKpiu3SQ": "hyN9IKGfWKdAwFaE5pm0qg"
+                   }
+               }
+           };
+           var video,
+           player,
+           mpd_url = "./output_encrypted/stream.mpd";
+           video = document.querySelector("video");
+           player = dashjs.MediaPlayer().create();
+           player.setProtectionData(protData);
+           player.initialize(video, mpd_url, true);
+           player.on(dashjs.MediaPlayer.events["PLAYBACK_ENDED"], function() {
             clearInterval(eventPoller);
-        });
-        var eventPoller = setInterval(function() {
-        var streamInfo = player.getActiveStream().getStreamInfo();
-        var dashMetrics = player.getDashMetrics();
-        var dashAdapter = player.getDashAdapter();
-        if (dashMetrics && streamInfo) {
-        const periodIdx = streamInfo.index;
-        var repSwitch = dashMetrics.getCurrentRepresentationSwitch('video', true);
-        var bufferLevel = dashMetrics.getCurrentBufferLevel('video', true);
-        var bitrate = repSwitch ? Math.round(dashAdapter.
-        getBandwidthForRepresentation(repSwitch.to,
-        periodIdx) / 1000) : NaN;
-        document.getElementById('buffer').innerText = bufferLevel + " secs";
-        document.getElementById('bitrate').innerText = bitrate + " Kbps";
-        document.getElementById('representation').innerText = repSwitch.to;
+            });
+           var eventPoller = setInterval(function() {
+            var streamInfo = player.getActiveStream().getStreamInfo();
+            var dashMetrics = player.getDashMetrics();
+            var dashAdapter = player.getDashAdapter();
+            if (dashMetrics && streamInfo) {
+                const periodIdx = streamInfo.index;
+                var repSwitch = dashMetrics.getCurrentRepresentationSwitch('video', true);
+                var bufferLevel = dashMetrics.getCurrentBufferLevel('video', true);
+                var bitrate = repSwitch ? Math.round(dashAdapter.
+                    getBandwidthForRepresentation(repSwitch.to,
+                        periodIdx) / 1000) : NaN;
+                bitrate_double = bitrate;
+                buffer_double = bufferLevel;
+                document.getElementById('buffer').innerText = bufferLevel + " secs";
+                document.getElementById('bitrate').innerText = bitrate + " Kbps";
+                document.getElementById('representation').innerText = repSwitch.to;
+            }
+            }, 500);
         }
-        }, 500);
-        }
-    </script>
+   </script>
 
-    <style>
-        video {
-            width: 640px;
-            height: 360px;
-        }
-    </style>
-    </head>
-    <body>
-        <div class="code">
-            <video class="dashjs-player" autoplay controls preload="auto"></video>
-	</div>
-        <div class="code">
-            <p>Video Bitrate: <span id="bitrate"></span></p>
-            <p>Video Buffer: <span id="buffer"></span></p>
-            <p>Video Representation: <span id="representation"></span></p>
-        </div>
-    </body>
+
+
+   <style>
+    video {
+        width: 640px;
+        height: 360px;
+    }
+    canvas {
+        width: 640px;
+        height: 360px;
+    }
+</style>
+</head>
+<body>
+    <div class="code">
+        <video class="dashjs-player" autoplay controls preload="auto"></video>
+    </div>
+    <div class="code">
+        <p>Video Bitrate: <span id="bitrate"></span></p>
+        <p>Video Buffer: <span id="buffer"></span></p>
+        <p>Video Representation: <span id="representation"></span></p>
+    </div>
+
+
+
+    <div>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <canvas id="myChart"></canvas>
+        <script>
+            var ctx = document.getElementById('myChart');
+            const labels = [];
+            var data = {
+                labels: labels,
+                datasets: [
+                {
+                  label: 'Buffer_level',
+                  data: [],
+                  borderColor: 'rgb(255,99,132)',
+			  backgroundColor: 'rgb(255,99,132)',
+                  yAxisID: 'y',                  
+                },
+                {
+                  label: 'Bitrate',
+                  data: [],
+                  borderColor: 'rgb(54,162,235)',
+                  backgroundColor: 'rgb(54,162,235)',
+                  yAxisID: 'y1',
+                }
+              ]
+            };
+            var mychart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: false,
+                    interaction: {
+                      mode: 'index',
+                      intersect: false,
+                    },
+                    stacked: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Statistics Chart'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            title: {
+                               display: true,
+                               text: 'Buffer level (s)'
+                            },
+                            position: 'left'
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            title: {
+                               display: true,
+                               text: 'Bitrate (Kbps)'
+                            },
+                            position: 'right',
+
+                            // grid line settings
+                            grid: {
+                              drawOnChartArea: false, // only want the grid lines for one axis to show up
+                            },
+                        },
+                    }
+                },
+            });
+        </script>
+        <script>
+            var myVar = setInterval(myTimer, 1000);
+
+            function myTimer() {
+
+                    var xaxis = mychart.data.labels;
+                    if (xaxis.length > 10){
+                        xaxis.shift();
+                        xaxis.push(new Date().toLocaleTimeString());
+                    }
+                    else {
+                        xaxis.push(new Date().toLocaleTimeString());
+                    }
+
+                    var dataset = mychart.data.datasets[0];
+                    if (dataset.data.length > 10){
+                        dataset.data.shift();
+                        dataset.data.push(buffer_double);
+                    }
+                    else {
+                        dataset.data.push(buffer_double);
+                    }
+                    dataset = mychart.data.datasets[1];
+                    if (dataset.data.length > 10){
+                        dataset.data.shift();
+                        dataset.data.push(bitrate_double);
+                    }
+                    else {
+                        dataset.data.push(bitrate_double);
+                    }
+                  
+                  mychart.update();
+            }           
+        </script>
+    </div>
+</body>
 </html>
